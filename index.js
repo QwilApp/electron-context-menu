@@ -137,7 +137,7 @@ function create(win, options) {
 		menuTpl = delUnusedElements(menuTpl);
 
 		if (menuTpl.length > 0) {
-			const menu = (electron.remote ? electron.remote.Menu : electron.Menu).buildFromTemplate(menuTpl);
+			let menu = (electron.remote ? electron.remote.Menu : electron.Menu).buildFromTemplate(menuTpl);
 
 			/*
 			 * When electron.remote is not available this runs in the browser process.
@@ -146,7 +146,11 @@ function create(win, options) {
 			 * When this is being called from a webView, we can't use win as this
 			 * would refere to the webView which is not allowed to render a popup menu.
 			 */
-			menu.popup(electron.remote ? electron.remote.getCurrentWindow() : win);
+			menu.popup({
+				window: electron.remote ? electron.remote.getCurrentWindow() : win,
+				// Workaround gc issue on old electron (https://github.com/electron/electron/issues/20737)
+				callback: () => { menu = null; },
+			});
 		}
 	});
 }
